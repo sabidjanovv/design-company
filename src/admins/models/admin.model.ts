@@ -11,12 +11,12 @@ import {
   Unique,
   HasMany,
 } from 'sequelize-typescript';
-import { AdminRole } from '../../common/enums/admins-role.enum';
+import { AdminRole } from '../../common/enums/enum';
 import { Collection } from '../../collections/models/collection.model';
 
 @Table({
   tableName: 'admins',
-  timestamps: true
+  timestamps: true,
 })
 export class Admin extends Model<Admin> {
   @PrimaryKey

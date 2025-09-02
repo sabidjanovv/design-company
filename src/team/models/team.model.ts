@@ -5,7 +5,6 @@ import {
   Table,
   ForeignKey,
 } from 'sequelize-typescript';
-import { Image } from '../../images/models/image.model';
 
 @Table({ tableName: 'teams', timestamps: true })
 export class Team extends Model<Team> {
@@ -28,26 +27,21 @@ export class Team extends Model<Team> {
   })
   position: string;
 
-  @ForeignKey(() => Image)
-  @Column({ type: DataType.INTEGER, allowNull: true })
-  image_id: number;
+  @Column({ type: DataType.STRING, allowNull: true }) // fayl nomi/url bo‘ladi
+  image_url: string;
 
-  @Column({
-    type: DataType.TEXT,
-    allowNull: true,
-  })
+  @Column({ type: DataType.TEXT, allowNull: true })
   description: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: true,
-  })
+  @Column({ type: DataType.STRING, allowNull: true })
   phone: string;
 
   @Column({
     type: DataType.BOOLEAN,
     allowNull: false,
-    defaultValue: true, // default: faol
+    defaultValue: true,
   })
   is_active: boolean;
 }
+
+

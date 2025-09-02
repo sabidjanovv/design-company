@@ -7,7 +7,7 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { AdminRole } from '../../common/enums/admins-role.enum';
+import { AdminRole } from '../../common/enums/enum';
 
 export class CreateAdminDto {
   @ApiProperty({
