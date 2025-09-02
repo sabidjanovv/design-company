@@ -74,21 +74,60 @@ export class CollectionsController {
     return this.collectionsService.findOne(+id);
   }
 
+  // @Patch(':id')
+  // @ApiOperation({ summary: 'ID bo‘yicha kolleksiyani yangilash' })
+  // @ApiParam({ name: 'id', type: Number })
+  // @ApiBody({ type: UpdateCollectionDto })
+  // @ApiResponse({
+  //   status: 200,
+  //   description: 'Kolleksiya muvaffaqiyatli yangilandi',
+  //   type: Collection,
+  // })
+  // @ApiResponse({ status: 404, description: 'Kolleksiya topilmadi' })
+  // update(
+  //   @Param('id') id: string,
+  //   @Body() updateCollectionDto: UpdateCollectionDto,
+  // ) {
+  //   return this.collectionsService.update(+id, updateCollectionDto);
+  // }
+
   @Patch(':id')
-  @ApiOperation({ summary: 'ID bo‘yicha kolleksiyani yangilash' })
+  @UseInterceptors(FilesInterceptor('new_files')) // yangi fayllar uchun
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'ID bo‘yicha kolleksiyani yangilash (rasmlar bilan)',
+  })
   @ApiParam({ name: 'id', type: Number })
-  @ApiBody({ type: UpdateCollectionDto })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Yangi nom' },
+        description: { type: 'string', example: 'Yangilangan tavsif' },
+        old_image_ids: {
+          type: 'array',
+          items: { type: 'number' },
+          example: [3, 5],
+        },
+        new_files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Kolleksiya muvaffaqiyatli yangilandi',
     type: Collection,
   })
   @ApiResponse({ status: 404, description: 'Kolleksiya topilmadi' })
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateCollectionDto: UpdateCollectionDto,
+    @UploadedFiles() newFiles: Express.Multer.File[],
   ) {
-    return this.collectionsService.update(+id, updateCollectionDto);
+    return this.collectionsService.update(+id, updateCollectionDto, newFiles);
   }
 
   @Delete(':id')

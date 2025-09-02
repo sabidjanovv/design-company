@@ -8,12 +8,12 @@ import { Admin } from './models/admin.model';
 
 @Injectable()
 export class AdminsService {
-  constructor(@InjectModel(Admin) private adminRepo: typeof Admin) {}
+  constructor(@InjectModel(Admin) private adminModel: typeof Admin) {}
 
   // CREATE
   async create(createAdminDto: CreateAdminDto): Promise<Admin> {
     const hashedPassword = await argon2.hash(createAdminDto.password);
-    const admin = await this.adminRepo.create({
+    const admin = await this.adminModel.create({
       ...createAdminDto,
       hashed_password: hashedPassword,
     });
@@ -22,12 +22,12 @@ export class AdminsService {
 
   // GET ALL
   async findAll(): Promise<Admin[]> {
-    return this.adminRepo.findAll();
+    return this.adminModel.findAll();
   }
 
   // GET BY ID
   async findOne(id: number): Promise<Admin> {
-    const admin = await this.adminRepo.findByPk(id);
+    const admin = await this.adminModel.findByPk(id);
     if (!admin) throw new NotFoundException(`Admin with ID ${id} not found`);
     return admin;
   }

@@ -5,6 +5,7 @@ import {
   DataType,
   ForeignKey,
   HasMany,
+  BelongsTo,
 } from 'sequelize-typescript';
 import { Admin } from '../../admins/models/admin.model';
 import { Image } from '../../images/models/image.model';
@@ -28,11 +29,13 @@ export class Collection extends Model<Collection> {
   @ForeignKey(() => Image) // asosiy rasm
   @Column(DataType.INTEGER)
   main_image_id: number;
+  @BelongsTo(() => Image, { as: 'mainImage' }) // alias berildi
+  mainImage: Image;
 
   @ForeignKey(() => Category)
   @Column(DataType.INTEGER)
   category_id: number;
 
-  @HasMany(() => Image)
+  @HasMany(() => Image, { as: 'images' }) // alias berildi
   images: Image[];
 }
