@@ -5,6 +5,9 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Collection } from './models/collection.model';
 import { MinioService } from '../minio/minio.service';
 import { Image } from '../images/models/image.model';
+import { PaginationDto } from '../common/pagination/pagination.dto';
+import { Op } from 'sequelize';
+
 @Injectable()
 export class CollectionsService {
   constructor(
@@ -44,13 +47,48 @@ export class CollectionsService {
     return collection;
   }
 
-  findAll() {
-    return this.collectionRepo.findAll({
+  async findAll(paginationDto: PaginationDto) {
+    const {
+      page = 1,
+      limit = 20,
+      category_id,
+      search,
+      orderDir,
+    } = paginationDto;
+
+    const offset = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (category_id) {
+      where.category_id = category_id;
+    }
+
+    if (search) {
+      where.title = { [Op.iLike]: `%${search}%` }; // qidirish uchun
+    }
+
+    const collections = await this.collectionRepo.findAndCountAll({
+      where,
       include: [
-        { model: Image, as: 'mainImage' }, // asosiy rasm
-        { model: Image, as: 'images' }, // barcha rasmlar
+        { model: Image, as: 'mainImage' },
+        { model: Image, as: 'images' },
       ],
+      limit,
+      offset,
+      order: [['createdAt', orderDir || 'DESC']], // default: eng yangilari
     });
+
+    return {
+      statusCode: 200,
+      message: 'Collections fetched successfully',
+      data: {
+        total: collections.count,
+        page,
+        limit,
+        items: collections.rows,
+      },
+    };
   }
 
   findOne(id: number) {
@@ -88,7 +126,6 @@ export class CollectionsService {
 
     // 2. Eski rasmlarni o‘chirish
     if (updateCollectionDto.old_image_ids) {
-
       let ids: number[] = [];
       if (typeof updateCollectionDto.old_image_ids === 'string') {
         ids = updateCollectionDto.old_image_ids

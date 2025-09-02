@@ -8,13 +8,15 @@ import {
   Delete,
   UseInterceptors,
   UploadedFiles,
+  Query,
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Collection } from './models/collection.model';
+import { PaginationDto } from '../common/pagination/pagination.dto';
 
 @ApiTags('Collections')
 @Controller('collections')
@@ -57,8 +59,40 @@ export class CollectionsController {
     description: 'Kolleksiyalar ro‘yxati',
     type: [Collection],
   })
-  findAll() {
-    return this.collectionsService.findAll();
+  @ApiQuery({
+    name: 'category_id',
+    required: false,
+    type: String,
+    description: 'Kategoriya ID bo‘yicha filter',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 20,
+    description: 'Qancha kolleksiya olish kerak',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Qaysi sahifa',
+  })
+  @ApiQuery({
+    name: 'orderDir',
+    required: false,
+    enum: ['ASC', 'DESC'],
+    description: 'Saralash tartibi',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Qidiruv uchun so‘z',
+  })
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.collectionsService.findAll(paginationDto);
   }
 
   @Get(':id')
