@@ -6,18 +6,22 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Category } from './models/category.model';
+import { AdminGuard } from '../common/guards/admin.guard';
 
 @ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Post()
   @ApiOperation({ summary: 'Create new category' })
   @ApiResponse({
@@ -48,6 +52,8 @@ export class CategoriesController {
     return this.categoriesService.findOne(+id);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Patch(':id')
   @ApiOperation({ summary: 'Update category' })
   @ApiResponse({
@@ -62,6 +68,8 @@ export class CategoriesController {
     return this.categoriesService.update(+id, updateCategoryDto);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete category' })
   @ApiResponse({ status: 200, description: 'Category deleted successfully' })

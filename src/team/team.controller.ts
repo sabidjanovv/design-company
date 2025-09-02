@@ -8,19 +8,23 @@ import {
   Delete,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { TeamService } from './team.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 import { Team } from './models/team.model';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AdminGuard } from '../common/guards/admin.guard';
 
 @ApiTags('Team')
 @Controller('team')
 export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Post()
   @UseInterceptors(FileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
@@ -66,6 +70,8 @@ export class TeamController {
     return this.teamService.findOne(+id);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Patch(':id')
   @UseInterceptors(FileInterceptor('file')) // form-data => file
   @ApiConsumes('multipart/form-data')
@@ -92,6 +98,8 @@ export class TeamController {
     return this.teamService.update(+id, updateTeamDto, file);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Remove a team member by id' })
   @ApiResponse({ status: 200, description: 'Deleted team member' })

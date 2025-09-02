@@ -6,8 +6,9 @@ import { Admin } from './models/admin.model';
 import { Collection } from '../collections/models/collection.model';
 
 @Module({
-  imports:[SequelizeModule.forFeature([Admin, Collection])],
+  imports: [SequelizeModule.forFeature([Admin, Collection])],
   controllers: [AdminsController],
   providers: [AdminsService],
+  exports: [AdminsService],
 })
 export class AdminsModule {}
