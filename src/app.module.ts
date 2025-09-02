@@ -6,6 +6,8 @@ import { ImagesModule } from './images/images.module';
 import { CollectionsModule } from './collections/collections.module';
 import { CategoriesModule } from './categories/categories.module';
 import { MinioModule } from './minio/minio.module';
+import { AuthModule } from './auth/auth.module';
+import { TeamModule } from './team/team.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ envFilePath: '.env', isGlobal: true }),
@@ -21,11 +23,13 @@ import { MinioModule } from './minio/minio.module';
       sync: { alter: true },
       logging: false,
     }),
+    AuthModule,
     AdminsModule,
     CategoriesModule,
     CollectionsModule,
     ImagesModule,
     MinioModule,
+    TeamModule,
   ],
   controllers: [],
   providers: [],
