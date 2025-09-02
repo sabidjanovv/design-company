@@ -9,20 +9,24 @@ import {
   UseInterceptors,
   UploadedFiles,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Collection } from './models/collection.model';
 import { PaginationDto } from '../common/pagination/pagination.dto';
+import { AdminGuard } from '../common/guards/admin.guard';
 
 @ApiTags('Collections')
 @Controller('collections')
 export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Post()
   @UseInterceptors(FilesInterceptor('files')) // form-data => files[]
   @ApiConsumes('multipart/form-data')
@@ -125,6 +129,8 @@ export class CollectionsController {
   //   return this.collectionsService.update(+id, updateCollectionDto);
   // }
 
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Patch(':id')
   @UseInterceptors(FilesInterceptor('new_files')) // yangi fayllar uchun
   @ApiConsumes('multipart/form-data')
@@ -164,6 +170,8 @@ export class CollectionsController {
     return this.collectionsService.update(+id, updateCollectionDto, newFiles);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'ID bo‘yicha kolleksiyani o‘chirish' })
   @ApiParam({ name: 'id', type: Number })

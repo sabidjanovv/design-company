@@ -1,7 +1,8 @@
-import { Controller, Post, Body, Get, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Headers, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SignInDto } from './dto/signin.dto';
+import { AdminGuard } from '../common/guards/admin.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -17,7 +18,8 @@ export class AuthController {
     return this.authService.signin(signinDto);
   }
 
-
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
   @Get('/profile')
   async adminProfileCheck(@Headers('authorization') authorization: string) {
     // Header dan tokenni ajratib olish

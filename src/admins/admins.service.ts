@@ -32,6 +32,12 @@ export class AdminsService {
     return admin;
   }
 
+  async findById(id: number): Promise<Admin> {
+    const admin = await this.adminModel.findByPk(id);
+    if (!admin) throw new NotFoundException(`Admin with ID ${id} not found`);
+    return admin;
+  }
+
   // UPDATE
   async update(id: number, updateAdminDto: UpdateAdminDto): Promise<Admin> {
     const admin = await this.findOne(id);
