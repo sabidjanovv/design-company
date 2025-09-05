@@ -29,8 +29,8 @@ import { AuthGuard } from '@nestjs/passport';
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}
 
-  @ApiBearerAuth()
-  @UseGuards(SuperAdminGuard)
+  // @ApiBearerAuth()
+  // @UseGuards(SuperAdminGuard)
   @Post()
   @ApiOperation({ summary: 'Create a new admin' })
   @ApiBody({ type: CreateAdminDto })

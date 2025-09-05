@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ImagesService } from './images.service';
-import { ImagesController } from './images.controller';
+// import { ImagesController } from './images.controller';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Image } from './models/image.model';
 import { MinioModule } from '../minio/minio.module';
@@ -10,7 +10,7 @@ import { MinioModule } from '../minio/minio.module';
     SequelizeModule.forFeature([Image]),
     MinioModule, // minio servisni ulash
   ],
-  controllers: [ImagesController],
+  controllers: [],
   providers: [ImagesService],
   exports: [ImagesService], // agar collection ishlatmoqchi bo‘lsa
 })
