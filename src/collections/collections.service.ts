@@ -1,50 +1,93 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Collection } from './models/collection.model';
 import { MinioService } from '../minio/minio.service';
 import { Image } from '../images/models/image.model';
 import { PaginationDto } from '../common/pagination/pagination.dto';
 import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
 export class CollectionsService {
   constructor(
-    @InjectModel(Collection) private collectionRepo: typeof Collection,
+    @InjectModel(Collection) private collectionModel: typeof Collection,
     @InjectModel(Image) private imageRepo: typeof Image,
+    @InjectConnection() private readonly sequelize: Sequelize,
     private readonly minioService: MinioService,
   ) {}
 
-  async create(dto: CreateCollectionDto, files: Express.Multer.File[]) {
-    // 1. Avval kolleksiya yozuvi
-    const collection = await this.collectionRepo.create({
-      added_admin_id: dto.added_admin_id,
-      category_id: dto.category_id,
-      title: dto.title,
-      description: dto.description,
-    });
+  // async create(dto: CreateCollectionDto, files: Express.Multer.File[]) {
+  //   // 1. Avval kolleksiya yozuvi
+  //   const collection = await this.collectionModel.create({
+  //     added_admin_id: dto.added_admin_id,
+  //     category_id: dto.category_id,
+  //     title: dto.title,
+  //     description: dto.description,
+  //   });
 
-    // 2. Fayllarni MinIO ga yuklash
-    for (const file of files) {
-      try {
+  //   // 2. Fayllarni MinIO ga yuklash
+  //   for (const file of files) {
+  //     try {
+  //       const fileName = await this.minioService.upload(file);
+  //       const image = await this.imageRepo.create({
+  //         collection_id: collection.id,
+  //         image_url: fileName,
+  //       });
+
+  //       if (!collection.main_image_id) {
+  //         collection.main_image_id = image.id;
+  //         await collection.save();
+  //       }
+  //     } catch (err) {
+  //       console.error('Xato faylda:', file.originalname, err);
+  //       throw err;
+  //     }
+  //   }
+
+  //   return collection;
+  // }
+
+  async create(dto: CreateCollectionDto, files: Express.Multer.File[]) {
+    const transaction = await this.sequelize.transaction();
+
+    try {
+      // 1. Avval transaction ichida collection yaratish
+      const collection = await this.collectionModel.create(
+        {
+          added_admin_id: dto.added_admin_id,
+          category_id: dto.category_id,
+          title: dto.title,
+          description: dto.description,
+        },
+        { transaction },
+      );
+
+      // 2. Fayllarni yuklash
+      for (const file of files) {
         const fileName = await this.minioService.upload(file);
-        const image = await this.imageRepo.create({
-          collection_id: collection.id,
-          image_url: fileName,
-        });
+        const image = await this.imageRepo.create(
+          {
+            collection_id: collection.id,
+            image_url: fileName,
+          },
+          { transaction },
+        );
 
         if (!collection.main_image_id) {
           collection.main_image_id = image.id;
-          await collection.save();
+          await collection.save({ transaction });
         }
-      } catch (err) {
-        console.error('Xato faylda:', file.originalname, err);
-        throw err;
       }
-    }
 
-    return collection;
+      // 🔥 hammasi muvaffaqiyatli bo‘lsa
+      await transaction.commit();
+      return collection;
+    } catch (err) {
+      await transaction.rollback(); // ❌ xato bo‘lsa collection ham saqlanmaydi
+      throw err;
+    }
   }
 
   async findAll(paginationDto: PaginationDto) {
@@ -68,8 +111,9 @@ export class CollectionsService {
       where.title = { [Op.iLike]: `%${search}%` }; // qidirish uchun
     }
 
-    const collections = await this.collectionRepo.findAndCountAll({
+    const collections = await this.collectionModel.findAndCountAll({
       where,
+      distinct: true,
       include: [
         { model: Image, as: 'mainImage' },
         { model: Image, as: 'images' },
@@ -92,7 +136,7 @@ export class CollectionsService {
   }
 
   findOne(id: number) {
-    return this.collectionRepo.findByPk(id, {
+    return this.collectionModel.findByPk(id, {
       include: [
         { model: Image, as: 'mainImage' }, // asosiy rasm
         { model: Image, as: 'images' }, // barcha rasmlar
@@ -101,7 +145,7 @@ export class CollectionsService {
   }
 
   // update(id: number, updateCollectionDto: UpdateCollectionDto) {
-  //   return this.collectionRepo.update(updateCollectionDto, { where: { id } });
+  //   return this.collectionModel.update(updateCollectionDto, { where: { id } });
   // }
 
   async update(
@@ -109,7 +153,7 @@ export class CollectionsService {
     updateCollectionDto: UpdateCollectionDto,
     newFiles: Express.Multer.File[],
   ) {
-    const collection = await this.collectionRepo.findByPk(id, {
+    const collection = await this.collectionModel.findByPk(id, {
       include: [Image],
     });
     if (!collection) throw new Error('Kolleksiya topilmadi');
@@ -179,10 +223,10 @@ export class CollectionsService {
       }
     }
 
-    return this.collectionRepo.findByPk(id, { include: [Image] });
+    return this.collectionModel.findByPk(id, { include: [Image] });
   }
 
   remove(id: number) {
-    return this.collectionRepo.destroy({ where: { id } });
+    return this.collectionModel.destroy({ where: { id } });
   }
 }
