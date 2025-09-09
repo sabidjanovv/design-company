@@ -24,7 +24,13 @@ export class Collection extends Model<Collection> {
   title: string;
 
   @Column(DataType.TEXT)
-  description: string;
+  description_uz: string;
+
+  @Column(DataType.TEXT)
+  description_ru: string;
+
+  @Column(DataType.TEXT)
+  description_en: string;
 
   @ForeignKey(() => Image) // asosiy rasm
   @Column(DataType.INTEGER)
@@ -35,6 +41,8 @@ export class Collection extends Model<Collection> {
   @ForeignKey(() => Category)
   @Column(DataType.INTEGER)
   category_id: number;
+  @BelongsTo(() => Category) // alias berildi
+  category: Category;
 
   @HasMany(() => Image, { as: 'images' }) // alias berildi
   images: Image[];

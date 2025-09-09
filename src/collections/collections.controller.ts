@@ -38,7 +38,9 @@ export class CollectionsController {
         added_admin_id: { type: 'number', example: 1 },
         category_id: { type: 'number', example: 2 },
         title: { type: 'string', example: 'Yangi kolleksiya' },
-        description: { type: 'string', example: 'Kolleksiya tavsifi' },
+        description_uz: { type: 'string', example: 'Kolleksiya tavsifi' },
+        description_ru: { type: 'string', example: 'Описание коллекции' },
+        description_en: { type: 'string', example: 'Collection description' },
         files: {
           type: 'array',
           items: {
@@ -90,6 +92,18 @@ export class CollectionsController {
     description: 'Saralash tartibi',
   })
   @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['interior', 'exterior'],
+    description: 'Dizayn turi',
+  })
+  @ApiQuery({
+    name: 'lang',
+    required: false,
+    enum: ['uz', 'ru', 'en'],
+    description: 'Til',
+  })
+  @ApiQuery({
     name: 'search',
     required: false,
     type: String,
@@ -97,6 +111,20 @@ export class CollectionsController {
   })
   findAll(@Query() paginationDto: PaginationDto) {
     return this.collectionsService.findAll(paginationDto);
+  }
+
+  @Get('/category/:id')
+  @ApiQuery({
+    name: 'lang',
+    required: false,
+    enum: ['uz', 'ru', 'en'],
+    description: 'Til',
+  })
+  findBycategoryId(
+    @Param('id') id: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.collectionsService.findByCategoryId(+id, paginationDto);
   }
 
   @Get(':id')
@@ -108,8 +136,14 @@ export class CollectionsController {
     type: Collection,
   })
   @ApiResponse({ status: 404, description: 'Kolleksiya topilmadi' })
-  findOne(@Param('id') id: string) {
-    return this.collectionsService.findOne(+id);
+  @ApiQuery({
+    name: 'lang',
+    required: false,
+    enum: ['uz', 'ru', 'en'],
+    description: 'Til',
+  })
+  findOne(@Param('id') id: string, @Query() paginationDto: PaginationDto) {
+    return this.collectionsService.findOne(+id, paginationDto);
   }
 
   // @Patch(':id')

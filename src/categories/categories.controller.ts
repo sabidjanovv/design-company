@@ -7,13 +7,15 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Category } from './models/category.model';
 import { AdminGuard } from '../common/guards/admin.guard';
+import { PaginationDto } from '../common/pagination/pagination.dto';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -42,6 +44,18 @@ export class CategoriesController {
   })
   findAll() {
     return this.categoriesService.findAll();
+  }
+
+  @Get('/by-type')
+  @ApiOperation({ summary: 'Get all categories' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['interior', 'exterior'],
+    description: 'Dizayn turi',
+  })
+  findAllCategories(@Query() paginationDto: PaginationDto) {
+    return this.categoriesService.findAllCategories(paginationDto);
   }
 
   @Get(':id')
