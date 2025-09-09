@@ -12,3 +12,9 @@ export enum CategoryType {
   INTERIOR = 'interior',
   EXTERIOR = 'exterior',
 }
+
+export enum Language {
+  UZ = 'uz',
+  RU = 'ru',
+  EN = 'en',
+}

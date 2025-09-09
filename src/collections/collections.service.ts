@@ -8,6 +8,7 @@ import { Image } from '../images/models/image.model';
 import { PaginationDto } from '../common/pagination/pagination.dto';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { Category } from '../categories/models/category.model';
 
 @Injectable()
 export class CollectionsService {
@@ -59,7 +60,9 @@ export class CollectionsService {
           added_admin_id: dto.added_admin_id,
           category_id: dto.category_id,
           title: dto.title,
-          description: dto.description,
+          description_uz: dto.description_uz,
+          description_ru: dto.description_ru,
+          description_en: dto.description_en,
         },
         { transaction },
       );
@@ -90,6 +93,64 @@ export class CollectionsService {
     }
   }
 
+  // async findAll(paginationDto: PaginationDto) {
+  //   const {
+  //     page = 1,
+  //     limit = 20,
+  //     category_id,
+  //     search,
+  //     orderDir,
+  //     type, // enum('interior', 'exterior')
+  //     lang
+  //   } = paginationDto;
+
+  //   const offset = (page - 1) * limit;
+
+  //   const where: any = {};
+
+  //   if (category_id) {
+  //     where.category_id = category_id;
+  //   }
+
+  //   if (search) {
+  //     where.title = { [Op.iLike]: `%${search}%` };
+  //   }
+
+  //   // category shartlarini ajratib olish
+  //   const categoryWhere: any = {};
+  //   if (type) {
+  //     categoryWhere.type = type;
+  //   }
+
+  //   const collections = await this.collectionModel.findAndCountAll({
+  //     where,
+  //     distinct: true,
+  //     include: [
+  //       { model: Image, as: 'mainImage' },
+  //       { model: Image, as: 'images' },
+  //       {
+  //         model: Category,
+  //         as: 'category',
+  //         where: Object.keys(categoryWhere).length ? categoryWhere : undefined,
+  //       },
+  //     ],
+  //     limit,
+  //     offset,
+  //     order: [['createdAt', orderDir || 'DESC']],
+  //   });
+
+  //   return {
+  //     statusCode: 200,
+  //     message: 'Collections fetched successfully',
+  //     data: {
+  //       total: collections.count,
+  //       page,
+  //       limit,
+  //       items: collections.rows,
+  //     },
+  //   };
+  // }
+
   async findAll(paginationDto: PaginationDto) {
     const {
       page = 1,
@@ -97,6 +158,8 @@ export class CollectionsService {
       category_id,
       search,
       orderDir,
+      type, // enum('interior', 'exterior')
+      lang = 'ru', // default ru
     } = paginationDto;
 
     const offset = (page - 1) * limit;
@@ -108,7 +171,13 @@ export class CollectionsService {
     }
 
     if (search) {
-      where.title = { [Op.iLike]: `%${search}%` }; // qidirish uchun
+      where.title = { [Op.iLike]: `%${search}%` };
+    }
+
+    // category shartlari
+    const categoryWhere: any = {};
+    if (type) {
+      categoryWhere.type = type;
     }
 
     const collections = await this.collectionModel.findAndCountAll({
@@ -117,11 +186,22 @@ export class CollectionsService {
       include: [
         { model: Image, as: 'mainImage' },
         { model: Image, as: 'images' },
+        {
+          model: Category,
+          as: 'category',
+          where: Object.keys(categoryWhere).length ? categoryWhere : undefined,
+        },
       ],
       limit,
       offset,
-      order: [['createdAt', orderDir || 'DESC']], // default: eng yangilari
+      order: [['createdAt', orderDir || 'DESC']],
     });
+
+    // description_lang ni qo‘shib qaytarish
+    const items = collections.rows.map((c: any) => ({
+      ...c.toJSON(),
+      description: c[`description_${lang}`] || c.description_ru, // fallback ru
+    }));
 
     return {
       statusCode: 200,
@@ -130,23 +210,82 @@ export class CollectionsService {
         total: collections.count,
         page,
         limit,
-        items: collections.rows,
+        items,
       },
     };
   }
 
-  findOne(id: number) {
-    return this.collectionModel.findByPk(id, {
+  async findByCategoryId(category_id: number, paginationDto: PaginationDto) {
+    const {
+      page = 1,
+      limit = 20,
+      orderDir,
+      lang = 'ru', // default ru
+    } = paginationDto;
+
+    const offset = (page - 1) * limit;
+
+    const collections = await this.collectionModel.findAndCountAll({
+      where: { category_id },
+      distinct: true,
+      col: 'id',
+      include: [
+        { model: Image, as: 'mainImage' },
+        { model: Image, as: 'images' },
+        {
+          model: Category,
+          as: 'category',
+        },
+      ],
+      limit,
+      offset,
+      order: [['createdAt', orderDir || 'DESC']],
+    });
+
+    // description_lang ni qo‘shib qaytarish
+    const items = collections.rows.map((c: any) => ({
+      ...c.toJSON(),
+      description: c[`description_${lang}`] || c.description_ru,
+    }));
+
+    return {
+      statusCode: 200,
+      message: 'Collections by category fetched successfully',
+      data: {
+        total: collections.count,
+        page,
+        limit,
+        items,
+      },
+    };
+  }
+
+  async findOne(id: number, paginationDto: PaginationDto) {
+    const { lang = 'ru' } = paginationDto; // default ru
+
+    const collection = await this.collectionModel.findByPk(id, {
       include: [
         { model: Image, as: 'mainImage' }, // asosiy rasm
         { model: Image, as: 'images' }, // barcha rasmlar
       ],
     });
-  }
 
-  // update(id: number, updateCollectionDto: UpdateCollectionDto) {
-  //   return this.collectionModel.update(updateCollectionDto, { where: { id } });
-  // }
+    if (!collection) {
+      return {
+        statusCode: 404,
+        message: 'Collection not found',
+      };
+    }
+
+    return {
+      statusCode: 200,
+      message: 'Collection fetched successfully',
+      data: {
+        ...collection.toJSON(),
+        description: collection[`description_${lang}`],
+      },
+    };
+  }
 
   async update(
     id: number,
@@ -161,7 +300,12 @@ export class CollectionsService {
     // 1. Matn maydonlarini yangilash
     await collection.update({
       title: updateCollectionDto.title ?? collection.title,
-      description: updateCollectionDto.description ?? collection.description,
+      description_uz:
+        updateCollectionDto.description_uz ?? collection.description_uz,
+      description_ru:
+        updateCollectionDto.description_ru ?? collection.description_ru,
+      description_en:
+        updateCollectionDto.description_en ?? collection.description_en,
       category_id: updateCollectionDto.category_id ?? collection.category_id,
     });
 

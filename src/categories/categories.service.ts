@@ -3,21 +3,36 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import { Category } from './models/category.model';
+import { PaginationDto } from '../common/pagination/pagination.dto';
 
 @Injectable()
 export class CategoriesService {
-  constructor(@InjectModel(Category) private categoryRepo: typeof Category) {}
+  constructor(@InjectModel(Category) private categoryModel: typeof Category) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
-    return await this.categoryRepo.create(createCategoryDto);
+    return await this.categoryModel.create(createCategoryDto);
   }
 
   async findAll() {
-    return await this.categoryRepo.findAll();
+    return await this.categoryModel.findAll();
+  }
+
+  async findAllCategories(paginationDto: PaginationDto) {
+    const { type } = paginationDto;
+
+    const where: any = {};
+    if (type) {
+      where.type = type; // agar filter kerak bo‘lsa
+    }
+
+    return await this.categoryModel.findAll({
+      where,
+      order: [['createdAt', 'DESC']], // misol uchun tartiblash
+    });
   }
 
   async findOne(id: number) {
-    const category = await this.categoryRepo.findByPk(id);
+    const category = await this.categoryModel.findByPk(id);
     if (!category)
       throw new NotFoundException(`Category with ID ${id} not found`);
     return category;

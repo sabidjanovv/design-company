@@ -24,7 +24,23 @@ export class CreateCollectionDto {
   })
   @IsString()
   @IsOptional()
-  description?: string;
+  description_uz: string;
+
+  @ApiProperty({
+    example: 'Ushbu kolleksiya yozgi maxsus mahsulotlardan iborat',
+    description: 'Kolleksiya tavsifi',
+  })
+  @IsString()
+  @IsOptional()
+  description_ru: string;
+
+  @ApiProperty({
+    example: 'Ushbu kolleksiya yozgi maxsus mahsulotlardan iborat',
+    description: 'Kolleksiya tavsifi',
+  })
+  @IsString()
+  @IsOptional()
+  description_en: string;
 
   @ApiProperty({
     example: 10,
